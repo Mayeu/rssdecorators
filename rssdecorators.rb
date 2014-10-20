@@ -5,62 +5,89 @@ require 'nokogiri'
 include Contracts
 
 feeds = [ { :name => 'gws', :url => 'http://www.girlswithslingshots.com/feed/'} ]
+#feeds = [ { :name => 'gws', :url => './feed.xml'} ]
 FEED_PATH = '/srv/http/feeds'
 
-class Feed
-  attr_accessor :name, :content
+# Type alias
+XmlDoc     = Nokogiri::XML::Document
+HtmlDoc    = Nokogiri::HTML::Document
+XmlElement = Nokogiri::XML::Element
 
-  def initialize name, content
-    @name    = name
-    @content = content
-  end
-
-  def select_item
-    content.xpath("//item")
-  end
+Contract String => XmlDoc
+def parse_feed path
+  Nokogiri::XML open path
 end
 
-class Item
-  attr_accessor :content
-
-  def initialize content
-    @content = content
-  end
+#Contract XmlDoc => ArrayOf[XmlElement]
+def select_item(feed)
+  feed.xpath("//item")
 end
 
-Contract String => Nokogiri::XML::Document
-def parse_feed feed_path
-  open feed_path do |content|
-    Nokogiri::XML content
-  end
+Contract XmlElement => String
+def page_link(item)
+  item.at_css('link').children.text
 end
 
-feeds.each do |f|
+Contract XmlElement => HtmlDoc
+def item_description(item)
+  Nokogiri::HTML(item.at_css('description').children.first.content)
+end
 
-  feed = Feed.new f[:name], parse_feed(f[:url])
+Contract String => HtmlDoc
+def parse_page(url)
+  Nokogiri::HTML open url
+end
 
-  feed.select_item.each do |it|
-    # Get the link
-    link = it.at_css('link').children.text
-    # Get the html page
-    html = Nokogiri::HTML (open link)
-    # Get the URL of the comic
-    url = html.at_css("img#comic")['src']
-    # Get the title attribute of the image
-    title = html.at_css("img#comic")['title']
-    # Get the description
-    desc = Nokogiri::HTML(it.at_css('description').children.first.content)
-    # Insert the image before the link to new comics
-    img = Nokogiri::XML::Node.new "img", desc
-    img['src'] = url
-    desc.at_css("body>a").add_previous_sibling img
-    caption = Nokogiri::XML::Node.new "p", desc
-    caption.content = title
-    desc.at_css("body>a").add_previous_sibling caption
+Contract XmlDoc => String
+def comics_url(page)
+  page.at_css("img#comic")['src']
+end
+
+Contract XmlDoc => String
+def comics_title(page)
+  page.at_css("img#comic")['title']
+end
+
+Contract XmlDoc, String => XmlElement
+def img_node(doc, src)
+  node = Nokogiri::XML::Node.new("img", doc)
+  node['src'] = src
+  node
+end
+
+Contract XmlDoc, String => XmlElement
+def caption_node(doc, caption)
+  node = Nokogiri::XML::Node.new "p", doc
+  node.content = caption
+  node
+end
+
+Contract XmlDoc, HtmlDoc => XmlDoc
+def new_desc(desc, page)
+  desc.at_css("body>a").add_previous_sibling img_node(desc, comics_url(page))
+  desc.at_css("body>a").add_previous_sibling caption_node(desc, comics_title(page))
+  desc
+end
+
+Contract XmlElement, String => String
+def inject_content(item, html)
+  item.at_css('description').children.first.content = html
+end
+
+Contract XmlElement => HtmlDoc
+def fetch_page(item)
+  parse_page(page_link(item))
+end
+
+feeds.each do |feed|
+
+  parsed_feed = parse_feed(feed[:url])
+
+  select_item(parsed_feed).each do |it|
     # Replace old desc
-    it.at_css('description').children.first.content = desc.to_html
+    inject_content(it, new_desc(item_description(it), fetch_page(it)).to_html)
   end
 
-  #File.write "#{FEED_PATH}/feed.name" feed.to_xml
-  puts feed.content.to_xml
+  #File.write "#{FEED_PATH}/feed[:name]" parsed_feed.to_xml
+  puts parsed_feed.to_xml
 end
