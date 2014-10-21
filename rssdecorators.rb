@@ -4,8 +4,8 @@ require 'nokogiri'
 
 include Contracts
 
-feeds = [ { :name => 'gws', :url => 'http://www.girlswithslingshots.com/feed/'} ]
-#feeds = [ { :name => 'gws', :url => './feed.xml'} ]
+# feeds = [{ name: 'gws', url: 'http://www.girlswithslingshots.com/feed/'}]
+feeds = [{ name: 'gws', url: './feed.xml' }]
 FEED_PATH = '/srv/http/feeds'
 
 # Type alias
@@ -13,81 +13,118 @@ XmlDoc     = Nokogiri::XML::Document
 HtmlDoc    = Nokogiri::HTML::Document
 XmlElement = Nokogiri::XML::Element
 
+# I/O
 Contract String => XmlDoc
-def parse_feed path
+def parse_feed(path)
   Nokogiri::XML open path
 end
 
-#Contract XmlDoc => ArrayOf[XmlElement]
-def select_item(feed)
-  feed.xpath("//item")
-end
-
-Contract XmlElement => String
-def page_link(item)
-  item.at_css('link').children.text
-end
-
-Contract XmlElement => HtmlDoc
-def item_description(item)
-  Nokogiri::HTML(item.at_css('description').children.first.content)
-end
-
+# I/O
 Contract String => HtmlDoc
 def parse_page(url)
   Nokogiri::HTML open url
 end
 
-Contract XmlDoc => String
-def comics_url(page)
-  page.at_css("img#comic")['src']
+class Page
+  attr_reader :content
+
+  def initialize(content)
+    @content = content
+  end
+
+  Contract Page => String
+  def comics_url
+    content.at_css('img#comic')['src']
+  end
+
+  Contract Page => String
+  def comics_title
+    content.at_css('img#comic')['title']
+  end
 end
 
-Contract XmlDoc => String
-def comics_title(page)
-  page.at_css("img#comic")['title']
+class Item
+  attr_reader :content
+
+  # Contract XmlElement => Item
+  def initialize(content)
+    @content = content
+  end
+
+  Contract XmlElement => String
+  def page_link
+    content.at_css('link').children.text
+  end
+
+  Contract XmlElement => HtmlDoc
+  def description
+    Nokogiri::HTML(content.at_css('description').children.first.content)
+  end
+
+  # I/O, parse page go on the net
+  Contract XmlElement => Page
+  def fetch_page
+    Page.new parse_page(page_link)
+  end
+
+  # Mutation
+  Contract String => String
+  def inject_content(html)
+    content.at_css('description').children.first.content = html
+  end
+end
+
+class Feed
+  attr_reader :content
+
+  def initialize(content)
+    @content = content
+  end
+
+  # Contract XmlDoc => ArrayOf[XmlElement]
+  def select_item
+    content.xpath('//item')
+  end
+
+  def to_xml
+    content.to_xml
+  end
 end
 
 Contract XmlDoc, String => XmlElement
-def img_node(doc, src)
-  node = Nokogiri::XML::Node.new("img", doc)
-  node['src'] = src
+def img_node(doc, src, title)
+  node = Nokogiri::XML::Node.new('img', doc)
+  node['src']   = src
+  node['title'] = title
   node
 end
 
 Contract XmlDoc, String => XmlElement
 def caption_node(doc, caption)
-  node = Nokogiri::XML::Node.new "p", doc
+  p_node = Nokogiri::XML::Node.new 'p', doc
+  node = Nokogiri::XML::Node.new 'i', doc
   node.content = caption
-  node
+  p_node.add_child(node)
+  p_node
 end
 
-Contract XmlDoc, HtmlDoc => XmlDoc
+Contract XmlDoc, Page => XmlDoc
 def new_desc(desc, page)
-  desc.at_css("body>a").add_previous_sibling img_node(desc, comics_url(page))
-  desc.at_css("body>a").add_previous_sibling caption_node(desc, comics_title(page))
+  desc.at_css('body>a').add_previous_sibling(img_node(desc, page.comics_url, page.comics_title))
+  desc.at_css('body>a').add_previous_sibling(caption_node(desc, page.comics_title))
   desc
-end
-
-Contract XmlElement, String => String
-def inject_content(item, html)
-  item.at_css('description').children.first.content = html
-end
-
-Contract XmlElement => HtmlDoc
-def fetch_page(item)
-  parse_page(page_link(item))
 end
 
 feeds.each do |feed|
 
-  parsed_feed = parse_feed(feed[:url])
+  parsed_feed = Feed.new(parse_feed(feed[:url]))
 
-  select_item(parsed_feed).each do |it|
+  parsed_feed.select_item.each do |it|
+    item = Item.new it
     # Replace old desc
-    inject_content(it, new_desc(item_description(it), fetch_page(it)).to_html)
+    item.inject_content(new_desc(item.description, item.fetch_page).to_html)
   end
 
-  #File.write "#{FEED_PATH}/feed[:name]" parsed_feed.to_xml
+  # File.write "#{FEED_PATH}/#{feed[:name]}", parsed_feed.to_xml
   puts parsed_feed.to_xml
 end
