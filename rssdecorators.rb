@@ -2,76 +2,26 @@ require 'open-uri'
 require 'contracts'
 require 'nokogiri'
 
+require_relative 'contract_type'
+require_relative 'page'
+require_relative 'item'
+
 include Contracts
 
 # feeds = [{ name: 'gws', url: 'http://www.girlswithslingshots.com/feed/'}]
 feeds = [{ name: 'gws', url: './feed.xml' }]
 FEED_PATH = '/srv/http/feeds'
 
-# Type alias
-XmlDoc     = Nokogiri::XML::Document
-HtmlDoc    = Nokogiri::HTML::Document
-XmlElement = Nokogiri::XML::Element
-
-# I/O
+# I/O, parse XML feed from the net
 Contract String => XmlDoc
 def parse_feed(path)
   Nokogiri::XML open path
 end
 
-# I/O
-Contract String => HtmlDoc
-def parse_page(url)
-  Nokogiri::HTML open url
-end
-
-class Page
-  attr_reader :content
-
-  def initialize(content)
-    @content = content
-  end
-
-  Contract Page => String
-  def comics_url
-    content.at_css('img#comic')['src']
-  end
-
-  Contract Page => String
-  def comics_title
-    content.at_css('img#comic')['title']
-  end
-end
-
-class Item
-  attr_reader :content
-
-  # Contract XmlElement => Item
-  def initialize(content)
-    @content = content
-  end
-
-  Contract XmlElement => String
-  def page_link
-    content.at_css('link').children.text
-  end
-
-  Contract XmlElement => HtmlDoc
-  def description
-    Nokogiri::HTML(content.at_css('description').children.first.content)
-  end
-
-  # I/O, parse page go on the net
-  Contract XmlElement => Page
-  def fetch_page
-    Page.new parse_page(page_link)
-  end
-
-  # Mutation
-  Contract String => String
-  def inject_content(html)
-    content.at_css('description').children.first.content = html
-  end
+# I/O, parse HTML page from the net
+Contract Item => HtmlDoc
+def parse_page(item)
+  Nokogiri::HTML open(item.page_link)
 end
 
 class Feed
@@ -81,7 +31,7 @@ class Feed
     @content = content
   end
 
-  # Contract XmlDoc => ArrayOf[XmlElement]
+  Contract XmlDoc => Nokogiri::XML::NodeSet
   def select_item
     content.xpath('//item')
   end
@@ -108,21 +58,16 @@ def caption_node(doc, caption)
   p_node
 end
 
-Contract XmlDoc, Page => XmlDoc
-def new_desc(desc, page)
-  desc.at_css('body>a').add_previous_sibling(img_node(desc, page.comics_url, page.comics_title))
-  desc.at_css('body>a').add_previous_sibling(caption_node(desc, page.comics_title))
-  desc
-end
-
 feeds.each do |feed|
 
   parsed_feed = Feed.new(parse_feed(feed[:url]))
 
   parsed_feed.select_item.each do |it|
     item = Item.new it
+    page_content = parse_page(item)
+    page = Page.new(page_content)
     # Replace old desc
-    item.inject_content(new_desc(item.description, item.fetch_page).to_html)
+    item.inject_content(page)
   end
 
   # File.write "#{FEED_PATH}/#{feed[:name]}", parsed_feed.to_xml
