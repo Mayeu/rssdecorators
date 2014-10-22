@@ -2,6 +2,7 @@ require 'contracts'
 
 include Contracts
 
+# Page
 class Page
   attr_reader :content
 

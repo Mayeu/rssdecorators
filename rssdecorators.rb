@@ -9,7 +9,7 @@ require_relative 'item'
 include Contracts
 
 # feeds = [{ name: 'gws', url: 'http://www.girlswithslingshots.com/feed/'}]
-feeds = [{ name: 'gws', url: './feed.xml' }]
+feeds = [{ name: 'GWS', url: './feed.xml' }]
 FEED_PATH = '/srv/http/feeds'
 
 # I/O, parse XML feed from the net
@@ -24,10 +24,12 @@ def parse_page(item)
   Nokogiri::HTML open(item.page_link)
 end
 
+# Feed
 class Feed
-  attr_reader :content
+  attr_reader :content, :name
 
-  def initialize(content)
+  def initialize(name, content)
+    @name    = name
     @content = content
   end
 
@@ -60,10 +62,10 @@ end
 
 feeds.each do |feed|
 
-  parsed_feed = Feed.new(parse_feed(feed[:url]))
+  parsed_feed = Feed.new(feed[:name], parse_feed(feed[:url]))
 
   parsed_feed.select_item.each do |it|
-    item = Item.new it
+    item = Item.new(parsed_feed.name, it)
     page_content = parse_page(item)
     page = Page.new(page_content)
     # Replace old desc
