@@ -1,9 +1,12 @@
 require 'contracts'
 
+require_relative 'item'
+require_relative 'page'
+
 include Contracts
 
 # GWS
-class GWS
+class GWS < Item
   attr_reader :content
 
   def initialize(content)

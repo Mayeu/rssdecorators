@@ -4,7 +4,11 @@ require 'nokogiri'
 
 require_relative 'contract_type'
 require_relative 'page'
-require_relative 'item'
+
+# Item
+class Item ; end
+
+require_relative 'gws'
 
 include Contracts
 
@@ -65,7 +69,7 @@ feeds.each do |feed|
   parsed_feed = Feed.new(feed[:name], parse_feed(feed[:url]))
 
   parsed_feed.select_item.each do |it|
-    item = Item.new(parsed_feed.name, it)
+    item = Object.const_get(feed[:name]).new(it)
     page_content = parse_page(item)
     page = Page.new(page_content)
     # Replace old desc
