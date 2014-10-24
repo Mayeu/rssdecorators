@@ -3,17 +3,20 @@ require 'contracts'
 require 'nokogiri'
 
 require_relative 'contract_type'
-require_relative 'page'
 
 # Item
 class Item ; end
+# Page
+class Page ; end
 
 require_relative 'gws'
+require_relative 'smbc'
 
 include Contracts
 
-# feeds = [{ name: 'gws', url: 'http://www.girlswithslingshots.com/feed/'}]
-feeds = [{ name: 'GWS', url: './feed.xml' }]
+feeds = [{ name: 'SMBC', url: 'http://www.smbc-comics.com/rss.php'},
+         { name: 'GWS', url: 'http://www.girlswithslingshots.com/feed/'}]
+#feeds = [{ name: 'GWS', url: './feed.xml' }]
 FEED_PATH = '/srv/http/feeds'
 
 # I/O, parse XML feed from the net
@@ -48,7 +51,7 @@ class Feed
 end
 
 Contract XmlDoc, String => XmlElement
-def img_node(doc, src, title)
+def img_node(doc, src, title = "")
   node = Nokogiri::XML::Node.new('img', doc)
   node['src']   = src
   node['title'] = title
@@ -71,7 +74,7 @@ feeds.each do |feed|
   parsed_feed.select_item.each do |it|
     item = Object.const_get(feed[:name]).new(it)
     page_content = parse_page(item)
-    page = Page.new(page_content)
+    page = Object.const_get("#{feed[:name]}Page").new(page_content)
     # Replace old desc
     item.inject_content(page)
   end

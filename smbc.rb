@@ -2,8 +2,8 @@ require 'contracts'
 
 include Contracts
 
-# GWS
-class GWS < Item
+# SMBC
+class SMBC < Item
   attr_reader :content
 
   def initialize(content)
@@ -23,8 +23,7 @@ class GWS < Item
   Contract Page => XmlDoc
   def new_description(page)
     desc = description
-    desc.at_css('body>a').add_previous_sibling(img_node(desc, page.comics_url, page.comics_title))
-    desc.at_css('body>a').add_previous_sibling(caption_node(desc, page.comics_title))
+    desc.at_css('img').add_next_sibling(img_node(desc, page.comics_url))
     desc
   end
 
@@ -36,7 +35,7 @@ class GWS < Item
 end
 
 # Page
-class GWSPage < Page
+class SMBCPage < Page
   attr_reader :content
 
   def initialize(content)
@@ -45,11 +44,6 @@ class GWSPage < Page
 
   Contract Page => String
   def comics_url
-    content.at_css('img#comic')['src']
-  end
-
-  Contract Page => String
-  def comics_title
-    content.at_css('img#comic')['title']
+    content.at_css('#aftercomic > img')['src']
   end
 end
