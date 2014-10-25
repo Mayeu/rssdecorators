@@ -19,6 +19,6 @@ feeds.each do |feed|
     item.inject_content(page)
   end
 
-  # File.write "#{FEED_PATH}/#{feed[:name]}", parsed_feed.to_xml
-  puts parsed_feed.to_xml
+  File.write "#{FEED_PATH}/#{feed[:name]}", parsed_feed.to_xml
+  #puts parsed_feed.to_xml
 end
