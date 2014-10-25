@@ -2,22 +2,17 @@ require 'open-uri'
 require 'contracts'
 require 'nokogiri'
 
-require_relative 'contract_type'
+require_relative 'rss_decorators/contract_type'
 
 # Item
 class Item ; end
 # Page
 class Page ; end
 
-require_relative 'gws'
-require_relative 'smbc'
+require_relative 'rss_decorators/gws'
+require_relative 'rss_decorators/smbc'
 
 include Contracts
-
-feeds = [{ name: 'SMBC', url: 'http://www.smbc-comics.com/rss.php'},
-         { name: 'GWS', url: 'http://www.girlswithslingshots.com/feed/'}]
-#feeds = [{ name: 'GWS', url: './feed.xml' }]
-FEED_PATH = '/srv/http/feeds'
 
 # I/O, parse XML feed from the net
 Contract String => XmlDoc
@@ -65,20 +60,4 @@ def caption_node(doc, caption)
   node.content = caption
   p_node.add_child(node)
   p_node
-end
-
-feeds.each do |feed|
-
-  parsed_feed = Feed.new(feed[:name], parse_feed(feed[:url]))
-
-  parsed_feed.select_item.each do |it|
-    item = Object.const_get(feed[:name]).new(it)
-    page_content = parse_page(item)
-    page = Object.const_get("#{feed[:name]}Page").new(page_content)
-    # Replace old desc
-    item.inject_content(page)
-  end
-
-  # File.write "#{FEED_PATH}/#{feed[:name]}", parsed_feed.to_xml
-  puts parsed_feed.to_xml
 end
