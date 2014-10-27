@@ -1,4 +1,4 @@
-require 'open-uri'
+  require 'open-uri'
 require 'contracts'
 require 'nokogiri'
 
@@ -11,6 +11,7 @@ class Page ; end
 
 require_relative 'rss_decorators/gws'
 require_relative 'rss_decorators/smbc'
+require_relative 'rss_decorators/menagea3'
 
 include Contracts
 
@@ -45,7 +46,7 @@ class Feed
   end
 end
 
-Contract XmlDoc, String => XmlElement
+Contract Or[XmlDoc,XmlElement], String => XmlElement
 def img_node(doc, src, title = "")
   node = Nokogiri::XML::Node.new('img', doc)
   node['src']   = src
