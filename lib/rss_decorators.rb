@@ -7,7 +7,14 @@ require_relative 'rss_decorators/contract_type'
 # Item
 class Item ; end
 # Page
-class Page ; end
+class Page
+  attr_reader :url, :content
+
+  def initialize(url, content)
+    @url     = url
+    @content = content
+  end
+end
 
 require_relative 'rss_decorators/gws'
 require_relative 'rss_decorators/smbc'
@@ -22,9 +29,10 @@ def parse_feed(path)
 end
 
 # I/O, parse HTML page from the net
-Contract Item => HtmlDoc
-def parse_page(item)
-  Nokogiri::HTML open(item.page_link)
+Contract String, Item => Page
+def parse_page(page_name, item)
+  page_content = Nokogiri::HTML open(item.page_link)
+  Object.const_get("#{page_name}Page").new(item.page_link, page_content)
 end
 
 # Feed

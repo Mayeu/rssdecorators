@@ -37,12 +37,6 @@ end
 
 # Page
 class GWSPage < Page
-  attr_reader :content
-
-  def initialize(content)
-    @content = content
-  end
-
   Contract Page => String
   def comics_url
     content.at_css('img#comic')['src']

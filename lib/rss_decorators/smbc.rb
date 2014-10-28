@@ -36,12 +36,6 @@ end
 
 # Page
 class SMBCPage < Page
-  attr_reader :content
-
-  def initialize(content)
-    @content = content
-  end
-
   Contract Page => String
   def comics_url
     content.at_css('#aftercomic > img')['src']

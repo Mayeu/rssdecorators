@@ -14,9 +14,7 @@ feeds.each do |feed|
 
   parsed_feed.select_item.each do |it|
     item = Object.const_get(feed[:name]).new(it)
-    page_content = parse_page(item)
-    page = Object.const_get("#{feed[:name]}Page").new(page_content)
-    # Replace old desc
+    page = parse_page(feed[:name], item)
     item.inject_content(page)
   end
 

@@ -38,12 +38,6 @@ end
 
 # Page
 class MenageA3Page < Page
-  attr_reader :content
-
-  def initialize(content)
-    @content = content
-  end
-
   Contract Page => String
   def comics_url
     content.at_css('#cc > a > img')['src']
