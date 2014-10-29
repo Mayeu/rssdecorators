@@ -4,10 +4,9 @@ include Contracts
 
 # GWS
 class GWS < Item
-  attr_reader :content
 
-  def initialize(content)
-    @content = content
+  def need_original_page?
+    true
   end
 
   Contract XmlElement => String

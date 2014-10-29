@@ -16,8 +16,12 @@ feeds.each do |feed|
 
   parsed_feed.select_item.each do |it|
     item = Object.const_get(feed[:name]).new(it)
-    page = parse_page(feed[:name], item)
-    item.inject_content(page)
+    if item.need_original_page?
+      page = parse_page(feed[:name], item)
+      item.inject_content(page)
+    else
+      item.inject_content
+    end
   end
 
   File.write "#{FEED_PATH}/#{feed[:name]}", parsed_feed.to_xml

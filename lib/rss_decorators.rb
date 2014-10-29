@@ -5,7 +5,14 @@ require 'nokogiri'
 require_relative 'rss_decorators/contract_type'
 
 # Item
-class Item ; end
+class Item
+  attr_reader :content
+
+  def initialize(content)
+    @content = content
+  end
+
+end
 # Page
 class Page
   attr_reader :url, :content
