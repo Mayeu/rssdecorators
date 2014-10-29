@@ -4,9 +4,10 @@ require 'rss_decorators'
 
 FEED_PATH = '/srv/http/feeds'
 
-feeds = [{ name: 'MenageA3', url: 'http://www.ma3comic.com/comic.rss'},
-         { name: 'SMBC',     url: 'http://www.smbc-comics.com/rss.php'},
-         { name: 'GWS',      url: 'http://www.girlswithslingshots.com/feed/'}]
+feeds = [{ name: 'Trondheim', url: 'http://www.lewistrondheim.com/blog/rss/fil_rss.xml'},
+         { name: 'MenageA3',  url: 'http://www.ma3comic.com/comic.rss'},
+         { name: 'SMBC',      url: 'http://www.smbc-comics.com/rss.php'},
+         { name: 'GWS',       url: 'http://www.girlswithslingshots.com/feed/'}]
 
 feeds.each do |feed|
 
