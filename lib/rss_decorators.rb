@@ -20,6 +20,7 @@ require_relative 'rss_decorators/gws'
 require_relative 'rss_decorators/smbc'
 require_relative 'rss_decorators/menagea3'
 require_relative 'rss_decorators/trondheim'
+require_relative 'rss_decorators/dilbert'
 
 include Contracts
 

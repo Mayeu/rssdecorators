@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'rssdecorators'
-  s.version     = '0.0.4'
+  s.version     = '0.0.5'
   s.summary     = 'Decorate RSS feeds'
   s.description = 'Sick of incomplete RSS'
   s.authors     = ['Mayeu']
