@@ -1,3 +1,4 @@
+require_relative 'feeds/buni'
 require_relative 'feeds/dilbert'
 require_relative 'feeds/gws'
 require_relative 'feeds/menagea3'
