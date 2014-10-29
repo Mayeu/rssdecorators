@@ -1,33 +1,11 @@
-  require 'open-uri'
+require 'open-uri'
 require 'contracts'
 require 'nokogiri'
 
 require_relative 'rss_decorators/contract_type'
-
-# Item
-class Item
-  attr_reader :content
-
-  def initialize(content)
-    @content = content
-  end
-
-end
-# Page
-class Page
-  attr_reader :url, :content
-
-  def initialize(url, content)
-    @url     = url
-    @content = content
-  end
-end
-
-require_relative 'rss_decorators/gws'
-require_relative 'rss_decorators/smbc'
-require_relative 'rss_decorators/menagea3'
-require_relative 'rss_decorators/trondheim'
-require_relative 'rss_decorators/dilbert'
+require_relative 'rss_decorators/item'
+require_relative 'rss_decorators/page'
+require_relative 'rss_decorators/feeds'
 
 include Contracts
 
