@@ -2,7 +2,8 @@
 
 require 'rss_decorators'
 
-FEED_PATH = '/srv/http/feeds'
+#FEED_PATH = '/srv/http/feeds'
+FEED_PATH = '.'
 
 feeds = [{ name: 'Dilbert',   url: 'http://feed.dilbert.com/dilbert/daily_strip'},
          { name: 'Buni',      url: 'http://www.bunicomic.com/feed/'},
@@ -22,7 +23,11 @@ feeds.each do |feed|
       page = parse_page(feed[:name], item)
       item.inject_content(page)
     else
-      item.inject_content
+      begin
+        item.inject_content
+      rescue
+        puts "Error #{$!}"
+      end
     end
   end
 
